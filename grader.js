@@ -56,9 +56,20 @@ var checkHtmlFile = function(htmlfile, checksfile) {
     return out;
 };
 
-var getRemoteFile = function(url){
-    var page = restler.get(url);
-    var output = cheerio.load(page);
+var getRemoteFile = function(url, checksfile){
+   restler.get(url).on('complete', function(result){
+        var page = result;
+	$ = cheerio.load(page);
+	var checks = loadChecks(checksfile).sort();
+	var out = {};
+	for(var ii in checks) {
+	    var present = $(checks[ii]).length > 0;
+	    out[checks[ii]] = present;
+	}
+	return out;
+    
+    });
+    
 };
 
 var clone = function(fn) {
@@ -77,12 +88,22 @@ if(require.main == module) {
     var checkJson;
     if(program.file){
 	checkJson = checkHtmlFile(program.file, program.checks);
+	var outJson = checkJson;
+	console.log(outJson);
     } else if(program.url) {
-	var remoteFile = getRemoteFile(program.url);
-	checkJson = checkHtmlFile(remoteFile, program.checks);
+//	checkJson = getRemoteFile(program.url, program.checks);
+	restler.get(program.url).on('success', function(result){
+	    $ = cheerio.load(result);
+	    var checks = loadChecks(program.checks).sort();
+	    var out = {};
+	    for(var ii in checks) {
+		var present = $(checks[ii]).length > 0;
+		out[checks[ii]] = present;
+	    }
+	    console.log(out);
+	});
     }
-    var outJson = JSON.stringify(checkJson, null, 4);
-    console.log(outJson);
+//    var outJson = JSON.stringify(checkJson, null, 4);
 } else {
     exports.checkHtmlFile = checkHtmlFile;
 }
