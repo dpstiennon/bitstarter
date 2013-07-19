@@ -57,7 +57,8 @@ var checkHtmlFile = function(htmlfile, checksfile) {
 };
 
 var getRemoteFile = function(url){
-    
+    var page = restler.get(url);
+    var output = cheerio.load(page);
 };
 
 var clone = function(fn) {
@@ -71,12 +72,12 @@ if(require.main == module) {
     program
 	.option('-c, --checks <check_file>', 'Path to checks.json', clone(assertFileExists), CHECKSFILE_DEFAULT)
 	.option('-f, --file <html_file>', 'Path to index.html', clone(assertFileExists))
-	.option('-u, --url <html_url>', 'Location of File to check', clone(assertFileExists))
+	.option('-u, --url <html_url>', 'Location of File to check')
 	.parse(process.argv);
     var checkJson;
     if(program.file){
 	checkJson = checkHtmlFile(program.file, program.checks);
-    } else {
+    } else if(program.url) {
 	var remoteFile = getRemoteFile(program.url);
 	checkJson = checkHtmlFile(remoteFile, program.checks);
     }
